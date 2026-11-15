@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Forms Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="brand-title">
+      <span>Smart Forms</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ==========================================
+         VIEW 1: FRONT PAGE (DASHBOARD)
+         ========================================== -->
+    <section id="view-dashboard" class="view-section active">
+      <div class="page-header">
+        <h1 class="page-title">Smart Forms</h1>
+        <button class="btn btn-primary" onclick="openCreateFormModal()">+ New smart form</button>
+      </div>
+
+      <div class="forms-grid" id="forms-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 2: FORM BUILDER & LOGIC
+         ========================================== -->
+    <section id="view-builder" class="view-section">
+      <div class="builder-nav-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="btn btn-secondary btn-sm" onclick="showDashboard()">&larr; Back to forms</button>
+          <span style="color: var(--border-dark);">|</span>
+          <div>
+            <h2 id="builder-form-title" style="font-size: 16px; font-weight: 600;">Untitled Smart Form</h2>
+            <div style="font-size: 11.5px; color: var(--text-muted);" id="builder-form-subtitle">Last edited today by You.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" onclick="simulateRespondentModal()">Preview</button>
+          <button class="btn btn-primary btn-sm" onclick="saveFormStudio()">Save Changes</button>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="builder-tabs">
+        <div class="builder-tab active" id="tab-form" onclick="switchBuilderTab('form')">Form</div>
+        <div class="builder-tab" id="tab-logic" onclick="switchBuilderTab('logic')">Logic</div>
+        <div class="builder-tab" id="tab-responses" onclick="switchBuilderTab('responses')">Responses</div>
+      </div>
+
+      <!-- TAB PANEL 1: FORM -->
+      <div id="panel-form" class="builder-panel active">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h3 style="font-size: 15px; font-weight: 600;">Form</h3>
+            <p style="font-size: 12.5px; color: var(--text-muted);">Responses to these questions will be used in the routing logic.</p>
+          </div>
+          <div class="switch-wrapper">
+            <span style="font-size: 12.5px; color: var(--text);">Include headline and description</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-headline-desc" onchange="toggleHeadlineDescription(this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Headline & Description Card -->
+        <div id="headline-description-card" class="card" style="display: none;">
+          <div class="card-head">
+            <span style="font-weight: 600; font-size: 13px;">Headline &amp; Description</span>
+          </div>
+          <div class="card-content">
+            <div id="headline-box" class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="margin-bottom: 0;">Headline</label>
+                <button class="trash-btn" type="button" onclick="deleteHeadlineBox()" title="Delete headline">🗑</button>
+              </div>
+              <input type="text" id="input-headline" placeholder="Enter headline" oninput="updateHeadline(this.value)">
+            </div>
+            <div id="add-headline-btn-wrap" style="display: none; margin-bottom: 14px;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="restoreHeadlineBox()">+ Add headline</button>
+            </div>
+
+            <div id="description-box" class="form-group" style="margin-bottom: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="margin-bottom: 0;">Description</label>
+                <button class="trash-btn" type="button" onclick="deleteDescriptionBox()" title="Delete description">🗑</button>
+              </div>
+              <textarea id="input-description" rows="2" placeholder="Enter description" oninput="updateDescription(this.value)"></textarea>
+            </div>
+            <div id="add-description-btn-wrap" style="display: none; margin-top: 10px;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="restoreDescriptionBox()">+ Add description</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Baseline Questions -->
+        <div class="card">
+          <div class="card-head">
+            <span style="font-weight: 600; font-size: 13px;">Questions</span>
+            <button class="btn btn-secondary btn-sm" onclick="openAddQuestionModal()">+ Add Question</button>
+          </div>
+          <div class="card-content">
+            <div class="form-group">
+              <label>Name <span style="color: var(--danger);">*</span></label>
+              <input type="text" placeholder="Short answer text" disabled style="background: var(--surface-subtle); cursor: not-allowed; color: var(--text-muted);">
+            </div>
+
+            <div class="form-group">
+              <label>Contact number <span style="color: var(--danger);">*</span></label>
+              <input type="tel" placeholder="Phone number" disabled style="background: var(--surface-subtle); cursor: not-allowed; color: var(--text-muted);">
+            </div>
+
+            <div class="form-group">
+              <label>Email address <span style="color: var(--danger);">*</span></label>
+              <input type="email" placeholder="Email address" disabled style="background: var(--surface-subtle); cursor: not-allowed; color: var(--text-muted);">
+            </div>
+
+            <div id="questions-list-container"></div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+          <button class="btn btn-secondary" id="btn-schedule-meeting" type="button" onclick="simulateRespondentModal()">Schedule meeting</button>
+          <button class="btn btn-primary" id="btn-form-next" onclick="switchBuilderTab('logic')">Next &rarr;</button>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 2: LOGIC -->
+      <div id="panel-logic" class="builder-panel">
+        <!-- Subview A: Routes Overview -->
+        <div id="logic-routes-overview">
+          <div style="margin-bottom: 18px;">
+            <h3 style="font-size: 16px; font-weight: 600;">Logic</h3>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">
+              Add routes to start sending people to the right destination. Remember, routes run in order!
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <span style="font-weight: 600; font-size: 14px;">Routes</span>
+              <button class="btn btn-secondary btn-sm" onclick="openRouteBuilder()">&plus; Create</button>
+            </div>
+
+            <div id="active-routes-container"></div>
+
+            <!-- Fallback Route -->
+            <div class="route-item-card" style="background: #fafafa;">
+              <div style="flex: 1; padding-left: 30px;">
+                <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 8px;">
+                  In all other cases route to
+                </div>
+                <div style="border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; background: #ffffff; max-width: 380px;">
+                  <div style="font-weight: 600; font-size: 13px;">Book a 15 mins call with me</div>
+                  <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
+                    Use the link: <a href="https://topmate.io/ajayyadav" target="_blank" style="color: var(--accent-blue); text-decoration: none;">https://topmate.io/ajayyadav</a>
+                  </div>
+                </div>
+              </div>
+              <div class="action-cell">
+                <button class="icon-btn" title="Options">&vellip;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subview B: Route Builder -->
+        <div id="logic-route-builder" style="display: none;">
+          <div style="margin-bottom: 20px;">
+            <a href="javascript:void(0)" onclick="handleBackFromRouteBuilder()" style="font-size: 12.5px; color: var(--accent-blue); text-decoration: none; font-weight: 500;">&lsaquo; Back to routing</a>
+            <h2 style="font-size: 18px; font-weight: 600; margin-top: 4px;">Add a route</h2>
+          </div>
+
+          <div class="logic-container-view">
+            <div id="logic-nodes-list">
+              <div class="logic-branch-node" data-node-type="IF">
+                <div class="rail-badge">IF</div>
+
+                <div class="logic-box">
+                  <div class="logic-box-head">
+                    <span class="logic-box-title">the form follows this condition</span>
+                    <span class="info-circle" title="Information">ⓘ</span>
+                  </div>
+                  <div class="logic-box-body">
+                    <select class="logic-q-select" onchange="handleLogicQuestionChange(this)">
+                      <option value="">Choose a question</option>
+                    </select>
+
+                    <div class="logic-conditions-list">
+                      <div class="logic-row">
+                        <select class="operator-select" style="background: #f1f5f9;">
+                          <option value="is">is</option>
+                          <option value="is_not">is not</option>
+                        </select>
+                        <select class="value-select" style="background: #f1f5f9;">
+                          <option value="">Select option</option>
+                        </select>
+                        <button class="btn-pill-action" type="button" onclick="addOrRow(this)">+ or</button>
+                        <button class="trash-btn" type="button" onclick="removeLogicRowOrNode(this)" title="Delete">🗑</button>
+                      </div>
+                    </div>
+
+                    <div style="margin-top: 14px;">
+                      <button class="btn-pill-action" type="button" onclick="addAndBlock(this)">+ and</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="add-question-wrapper">
+              <button class="btn-add-question-rail" type="button" onclick="addOrIfBlock()">+ Add another question</button>
+            </div>
+
+            <!-- THEN Block -->
+            <div class="logic-branch-node" id="node-then">
+              <div class="rail-badge">THEN</div>
+
+              <div class="logic-box">
+                <div class="logic-box-head">
+                  <span class="logic-box-title">go to a destination</span>
+                  <span class="info-circle" title="Information">ⓘ</span>
+                </div>
+                <div class="logic-box-body">
+                  <div style="display: flex; gap: 16px; align-items: flex-start;">
+                    <div style="width: 230px; flex-shrink: 0;">
+                      <label style="color: var(--text-muted); font-size: 12px; font-weight: 500; margin-bottom: 6px;">Destination</label>
+                      <select id="logic-destination-type" onchange="handleDestinationTypeChange(this.value)">
+                        <option value="event" selected>An event type</option>
+                        <option value="message">A custom message</option>
+                        <option value="url">An external URL</option>
+                      </select>
+                    </div>
+
+                    <div style="flex: 1;" id="dest-type-event-wrap">
+                      <label style="color: var(--text-muted); font-size: 12px; font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                        Event Type <span class="info-circle" style="font-size: 12px;">ⓘ</span>
+                      </label>
+                      <div style="position: relative; display: flex; align-items: center;">
+                        <select id="logic-event-type-select" style="padding-left: 28px; padding-right: 50px; cursor: pointer;">
+                          <option value="Exploratory Call with Ajay Yadava" selected>Exploratory Call with Ajay Yadava</option>
+                          <option value="15 Mins One-on-One Mentorship">15 Mins One-on-One Mentorship</option>
+                          <option value="Rehabilitation Intake with Mansi">Rehabilitation Intake with Mansi</option>
+                          <option value="General Technical Screening">General Technical Screening</option>
+                        </select>
+                        <span style="position: absolute; left: 11px; width: 8px; height: 8px; border-radius: 50%; background: #7c3aed; pointer-events: none;"></span>
+                        <div class="avatar-circle" style="position: absolute; right: 28px; width: 22px; height: 22px; pointer-events: none;">A</div>
+                      </div>
+                    </div>
+
+                    <div style="flex: 1; display: none;" id="dest-type-message-wrap">
+                      <label style="color: var(--text-muted); font-size: 12px; font-weight: 500; margin-bottom: 6px;">
+                        Custom Message
+                      </label>
+                      <input type="text" id="logic-custom-message-input" placeholder="We'll email you within 24 hours." value="We'll email you within 24 hours.">
+                    </div>
+
+                    <div style="flex: 1; display: none;" id="dest-type-url-wrap">
+                      <label style="color: var(--text-muted); font-size: 12px; font-weight: 500; margin-bottom: 6px;">
+                        External URL
+                      </label>
+                      <input type="text" id="logic-external-url-input" placeholder="https://example.com/pricing">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="logic-footer-actions">
+              <button class="btn btn-secondary" onclick="handleBackFromRouteBuilder()">Cancel</button>
+              <button class="btn btn-primary" onclick="saveLogicRoute()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 3: RESPONSES -->
+      <div id="panel-responses" class="builder-panel">
+        <div class="card">
+          <div class="card-head">
+            <span style="font-weight: 600; font-size: 13px;">Logged Responses</span>
+            <button class="btn btn-secondary btn-sm" onclick="exportCurrentResponses()">Export CSV</button>
+          </div>
+          <div class="card-content" style="padding: 0;">
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Contact</th>
+                  <th>Answers Summary</th>
+                  <th>Routed To</th>
+                </tr>
+              </thead>
+              <tbody id="responses-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+  <!-- Form Card Options Modal -->
+  <div class="modal-overlay" id="modal-card-options">
+    <div class="modal" style="max-width: 380px;">
+      <div class="modal-header">
+        <span class="modal-title" id="options-modal-title">Form Options</span>
+        <button class="icon-btn" onclick="closeModal('modal-card-options')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 4px;">
+        <button class="menu-item" onclick="handleCardAction('edit')">✏️ Edit form</button>
+        <button class="menu-item" onclick="handleCardAction('share')">🔗 Share</button>
+        <button class="menu-item" onclick="handleCardAction('rename')">🏷️ Rename form</button>
+        <button class="menu-item" onclick="handleCardAction('clone')">📋 Clone form</button>
+        <button class="menu-item" onclick="handleCardAction('export')">📊 Export results</button>
+        <button class="menu-item" onclick="handleCardAction('responses')">💬 Responses</button>
+        <div style="border-top: 1px solid var(--border); margin: 4px 0;"></div>
+        <button class="menu-item danger-item" onclick="handleCardAction('delete')">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 1: New Smart Form -->
+  <div class="modal-overlay" id="modal-create-form">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="create-modal-header-title">Create a new smart form</span>
+        <button class="icon-btn" onclick="closeModal('modal-create-form')">&times;</button>
+      </div>
+      
+      <div class="modal-body" id="create-modal-step-1">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          How would you like to begin setting up your smart form?
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="creation-choice-card" onclick="selectCreationPath('scratch')">
+            <div style="font-size: 26px; margin-bottom: 8px;">➕</div>
+            <div style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px;">Create a new form</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Start from scratch and build your form.</div>
+          </div>
+          <div class="creation-choice-card" onclick="selectCreationPath('import')">
+            <div style="font-size: 26px; margin-bottom: 8px;">📥</div>
+            <div style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px;">Import an existing form</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Import from a file or existing template.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-body" id="create-modal-step-2" style="display: none;">
+        <div class="form-group">
+          <label id="lbl-form-name">Name your smart form</label>
+          <input type="text" id="input-form-name" placeholder="e.g. Client Intake Assessment">
+        </div>
+        <div id="import-details-box" style="display: none; background: var(--surface-subtle); padding: 12px; border-radius: 6px; font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">
+          Import format: Pre-configured schema with default questions and routing template.
+        </div>
+      </div>
+
+      <div class="modal-footer" id="create-modal-footer-1">
+        <button class="btn btn-secondary" onclick="closeModal('modal-create-form')">Cancel</button>
+      </div>
+
+      <div class="modal-footer" id="create-modal-footer-2" style="display: none;">
+        <button class="btn btn-secondary" onclick="backToStep1()">Back</button>
+        <button class="btn btn-primary" onclick="submitCreateForm()">Create form</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Add / Edit Question -->
+  <div class="modal-overlay" id="modal-add-question">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="question-modal-title">Add question</span>
+        <button class="icon-btn" onclick="closeModal('modal-add-question')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Question type</label>
+          <select id="input-q-type" onchange="handleQuestionTypeChange(this.value)">
+            <option value="dropdown">Dropdown</option>
+            <option value="radio">Radio button</option>
+            <option value="short">Short answer</option>
+            <option value="paragraph">Paragraph</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Question</label>
+          <input type="text" id="input-q-label" placeholder="Enter your question">
+        </div>
+
+        <div class="form-group" id="question-options-group">
+          <label>Answer Choices</label>
+          <div class="options-list" id="modal-options-list"></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="appendOptionRow()">+ Add Choice</button>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+            <input type="checkbox" id="input-q-mandatory" checked>
+            <span>This question is mandatory</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-add-question')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitAddQuestion()">Save Question</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Rename Form -->
+  <div class="modal-overlay" id="modal-rename-form">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Rename Form</span>
+        <button class="icon-btn" onclick="closeModal('modal-rename-form')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>New Form Name</label>
+          <input type="text" id="input-rename-val">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-rename-form')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitRenameForm()">Save Name</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Share Form Link -->
+  <div class="modal-overlay" id="modal-share-form">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <span class="modal-title">Share Smart Form</span>
+        <button class="icon-btn" onclick="closeModal('modal-share-form')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Anyone with this link can fill out your smart form and trigger dynamic appointment routing.
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="share-link-input" readonly style="background: var(--surface-subtle);">
+          <button class="btn btn-secondary" onclick="copyShareLink()">Copy</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="simulateRespondentModal()">Open Respondent Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Respondent Form Preview -->
+  <div class="modal-overlay" id="modal-preview-form">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <span class="modal-title" id="preview-form-title">Smart Form Preview</span>
+          <div style="font-size: 11.5px; color: var(--text-muted);">Respondent submission test</div>
+        </div>
+        <button class="icon-btn" onclick="closeModal('modal-preview-form')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="preview-headline-box" style="margin-bottom: 18px; display: none;">
+          <h2 id="preview-headline-text" style="font-size: 17px; font-weight: 600; margin-bottom: 4px;"></h2>
+          <p id="preview-desc-text" style="font-size: 13px; color: var(--text-muted);"></p>
+        </div>
+
+        <form id="respondent-test-form" onsubmit="handlePreviewSubmit(event)" onchange="evaluatePreviewRouting()" oninput="evaluatePreviewRouting()">
+          <div class="form-group">
+            <label>Name *</label>
+            <input type="text" name="name" required placeholder="Enter name">
+          </div>
+
+          <div class="form-group">
+            <label>Contact number *</label>
+            <input type="tel" name="phone" required placeholder="Enter phone number">
+          </div>
+
+          <div class="form-group">
+            <label>Email address *</label>
+            <input type="email" name="email" required placeholder="Enter email address">
+          </div>
+
+          <div id="preview-dynamic-fields"></div>
+
+          <div style="margin-top: 18px;">
+            <button type="submit" class="btn btn-primary" style="border-radius: 20px; padding: 8px 28px;">Submit</button>
+          </div>
+        </form>
+
+        <div style="margin-top: 28px; border-top: 1px solid var(--border); padding-top: 18px;">
+          <h4 style="font-size: 13.5px; font-weight: 600; margin-bottom: 10px; color: var(--text);">Routing logic</h4>
+          <div style="border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; background: #ffffff; font-size: 13px; color: var(--text);">
+            Route to: <span id="preview-routing-logic-label" style="font-weight: 600; color: var(--text);">Select options to evaluate route</span>
+          </div>
+        </div>
+
+        <div id="preview-result-container" style="display: none; text-align: center; padding: 20px 0;">
+          <div style="font-size: 24px; margin-bottom: 8px;">✓</div>
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Submission Successful</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;" id="preview-matched-text"></p>
+          <button class="btn btn-secondary btn-sm" onclick="resetPreviewForm()">Fill Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+
+  <!-- Application Logic File -->
+  <script src="app.js"></script>
+</body>
+</html>
